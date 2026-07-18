@@ -1,0 +1,76 @@
+{
+  "keyboard_name": "my_keyboard",
+  "maintainer": "your_github",
+  "manufacturer": "Your Name",
+  "url": "https://example.com",
+  "bootloader_instructions": "Hold the RESET button while plugging in",
+
+  "processor": "atmega32u4",
+  "bootloader": "atmel-dfu",
+
+  "usb": {
+    "vid": "0x0000",
+    "pid": "0x0000",
+    "device_version": "1.0.0"
+  },
+
+  "features": {
+    "bootmagic": true,
+    "mousekey": true,
+    "extrakey": true,
+    "console": false,
+    "command": false,
+    "nkro": false,
+    "rgblight": true,
+    "backlight": true,
+    "audio": false
+  },
+
+  "diode_direction": "COL2ROW",
+  "matrix_pins": {
+    "cols": ["D0", "D1", "D2", "D3", "D4", "D5", "D6", "D7", "B4", "B5"],
+    "rows": ["B0", "B1", "B2", "B3", "B6"]
+  },
+
+  "backlight": {
+    "driver": "pwm",
+    "pin": "B7",
+    "levels": 3,
+    "breathing": true
+  },
+
+  "rgblight": {
+    "driver": "ws2812",
+    "led_count": 12,
+    "sleep": true,
+    "animations": {
+      "breathing": true,
+      "rainbow_mood": true,
+      "static_light": true
+    }
+  },
+
+  "ws2812": {
+    "driver": "bitbang",
+    "pin": "C6"
+  },
+
+  "encoder": {
+    "rotary": [
+      { "pin_a": "F0", "pin_b": "F1", "resolution": 4 }
+    ]
+  },
+
+  "community_layouts": ["60_ansi"],
+  "layouts": {
+    "LAYOUT": {
+      "layout": [
+        { "matrix": [0, 0], "x": 0, "y": 0 }
+      ]
+    }
+  },
+
+  "build": {
+    "lto": true
+  }
+}
