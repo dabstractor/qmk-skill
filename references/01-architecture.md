@@ -404,7 +404,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
 
 ## 9. Complete Overrideable Hook Catalog
 
-The hierarchy is **Core → Community Module (`_<module>`) → Keyboard/Revision (`_kb`) → Keymap (`_user`)**. A `_kb` implementation **must** call its `_user` counterpart at an appropriate point, or the keymap hook never fires. Likewise `_<module>_kb` must call `_<module>_user`. The full community-module pattern is documented in `11-other-features.md` (community_modules).
+The hierarchy is **Core → Community Module (`_<module>`) → Keyboard/Revision (`_kb`) → Keymap (`_user`)**. A `_kb` implementation **must** call its `_user` counterpart at an appropriate point, or the keymap hook never fires. Likewise `_<module>_kb` must call `_<module>_user`. The full community-module pattern is documented in `18-community-modules.md`.
 
 ### 9.1 Initialization (called in this order)
 
@@ -503,7 +503,7 @@ Implement **only one** of the three read functions. Overriding any of them makes
 
 ### 9.10 Community module hooks (`_<module>`)
 
-For keyboards/keymaps to override or augment a community module's processing, implement e.g. `process_record_<module>_kb` / `_user`. Same `_kb`-calls-`_user` discipline. See `11-other-features.md` (community_modules).
+For keyboards/keymaps to override or augment a community module's processing, implement e.g. `process_record_<module>_kb` / `_user`. Same `_kb`-calls-`_user` discipline. See `18-community-modules.md`.
 
 ---
 
@@ -598,7 +598,7 @@ uint32_t my_callback(uint32_t trigger_time, void *cb_arg) {
 - **`08-displays.md`** — `encoder_update_*` / `post_encoder_update_*`.
 - **`09-audio-haptic.md`** — `process_audio`/`process_haptic`/`process_midi`/`process_sequencer`/`process_clicky`.
 - **`10-connectivity.md`** — split sync over the main loop, wireless transport latency, `process_secure`/command/os_detection.
-- **`11-other-features.md`** — unicode/steno/wpm handlers, community module `_<module>` hook pattern.
+- **`11-other-features.md`** — unicode/steno/wpm handlers. **`18-community-modules.md`** — community module `_<module>` hook pattern, keycodes, examples.
 - **`12-hardware-platforms.md`** — `matrix_init_pins` / `matrix_read_*` custom-matrix overrides, hand-wire, porting.
 - **`14-configurator-api-via.md`** — `LAYOUT_*` macro generation for Configurator/VIA, `process_record_via`.
 - **`16-userspace-development.md`** — `_kb`/`_user` coding conventions for keyboards/userspace.

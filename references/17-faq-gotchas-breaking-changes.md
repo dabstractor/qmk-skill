@@ -209,7 +209,7 @@ just use `KC_CAPS` / `KC_NUM` / `KC_SCRL`.
 
 ## 4. The Great Renames — "Never Suggest the Old Name"
 
-These are the high-frequency traps. **Always use the right-hand column.**
+These are the high-frequency traps. **Always use the right-hand column.** For the exhaustive per-release catalog (every keycode change, for version-to-version migrations), see `references/19-keycodes-changelog.md` — it is an index into `references/keycodes-changelog/<version>.md` (one file per release; load only your migration window). To dump every release in `(from, to]` as one document, run `scripts/keycodes_migration.py --from <from> [--to <to|latest>]`. This table is the curated 80%, that catalog is the long tail.
 
 ### 4.1 Bootloader / reset keycode
 

@@ -605,6 +605,8 @@ if __name__ == '__main__':
     send_raw_report([0x41])
 ```
 
+> **Reference implementation to study.** Real-world Raw HID clients that multiplex many commands over the fixed 32-byte pipe are rare in-tree — read **Vial's matched pair**: firmware side `quantum/vial.c` in [`vial-kb/vial-qmk`](https://github.com/vial-kb/vial-qmk), host side `src/main/python/protocol/keyboard_comm.py` in [`vial-kb/vial-gui`](https://github.com/vial-kb/vial-gui). Together they show a production framing/command scheme end-to-end. (Vial prose docs: <https://get.vial.today/>.)
+
 ### Gotchas — Raw HID
 - **Reports are always exactly 32 bytes (`RAW_EPSIZE`)** both ways — pad your payload.
 - **`0xFF60`/`0x61` are the VIA defaults** — changing them breaks VIA/Vial and existing host tools.

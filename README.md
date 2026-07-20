@@ -27,10 +27,16 @@ An [Agent Skill](https://agentskills.io/specification) that turns any Agent-Skil
 ```
 qmk-skill/
 ├── SKILL.md            # navigation hub, triage table, playbooks, gotchas index
-├── references/         # 18 focused, independently-loadable references
+├── references/         # focused, independently-loadable references (00–19)
 │   ├── 00-cross-cutting-gotchas.md   # READ FIRST — traps, conflicts, dead APIs
 │   ├── 01-architecture.md            …
-│   └── 17-faq-gotchas-breaking-changes.md
+│   ├── 17-faq-gotchas-breaking-changes.md
+│   ├── 18-community-modules.md
+│   ├── 19-keycodes-changelog.md      # keycode-migration INDEX (per-version files below)
+│   └── keycodes-changelog/           # one file per release; load only your migration window
+├── scripts/
+│   ├── gen_keycode_catalog.py        # regenerate 19 + keycodes-changelog/ from a qmk_firmware checkout
+│   └── keycodes_migration.py         # dump every release changeset in (from, to] as one document
 └── assets/
     ├── keymap-template.c          # idiomatic starter keymap
     └── info-json-template.json    # starter keyboard definition (valid JSON)

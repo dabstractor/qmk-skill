@@ -83,6 +83,8 @@ pre_process_record_quantum          ← COMBOS run here (earliest), before your 
 
 ## H. Dead / renamed APIs — NEVER suggest these (trap detection) (`17`)
 
+> This is the curated high-frequency list. For the exhaustive per-release keycode-change catalog (version-to-version migrations), see `references/19-keycodes-changelog.md` — it is an index into `references/keycodes-changelog/<version>.md` (one file per release). To dump every release in a migration window `(from, to]` as one document, run `scripts/keycodes_migration.py --from <from> [--to <to|latest>]`.
+
 **Removed with zero backward-compat (will not compile):**
 - GPIO: `setPinOutput`/`writePinHigh`/`readPin`/`setPinInput` → use `gpio_set_pin_output`/`gpio_write_pin_high`/`gpio_read_pin`/`gpio_set_pin_input`. (`13`, `17`)
 - I²C: `i2c_readReg`/`i2c_writeReg` → use `i2c_read_register`/`i2c_write_register` (and the `_16` variants). (`13`, `17`)
@@ -107,7 +109,7 @@ pre_process_record_quantum          ← COMBOS run here (earliest), before your 
 - **Custom matrix full-replacement has mandatory calls** (`matrix_init_kb`/`matrix_scan_kb` + `debounce(...)`/`debounce_init()`) — omitting them silently breaks keymaps. Prefer `CUSTOM_MATRIX = lite` (just 2 functions). (`12`)
 - **Quantum Painter is ARM-only** (no AVR). OLED `90°/270°` rotation is software and costly (drops keycodes at ~15 ms on AVR). ST7565 `st7565_task_user` returns `void` (not `bool` like OLED). (`08`)
 - **Bootmagic Lite wipes EEPROM by default** unless `BOOTMAGIC_NO_EEPROM`. (`11`)
-- **Community Modules aren't supported by the Configurator** (build your own firmware); the main `.c` is auto-compiled only if its name matches the directory; API versions gated by `ASSERT_COMMUNITY_MODULES_MIN_API_VERSION` (commas, not dots). (`11`, `16`)
+- **Community Modules aren't supported by the Configurator** (build your own firmware); the main `.c` is auto-compiled only if its name matches the directory; API versions gated by `ASSERT_COMMUNITY_MODULES_MIN_API_VERSION` (commas, not dots). (`18`, `16`)
 
 ## J. Unicode & text (`11`, `05`)
 

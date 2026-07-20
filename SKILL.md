@@ -25,6 +25,16 @@ You are helping a user with **QMK Firmware** (the open-source keyboard firmware)
 3. **Never suggest removed APIs.** The QMK tree has churned hard: `setPinOutput`→`gpio_set_pin_output`, `RGB_*`→`UG_*`/`RM_*`, `RESET`→`QK_BOOT`, lowercase driver strings (`ws2812`, `snled27351`), callbacks now return `bool`, etc. The full list is `references/00 §H` and `references/17-faq-gotchas-breaking-changes.md`.
 4. **Verify the user's MCU/platform and bootloader** before recommending features or flash commands — many features are ARM-only or AVR-only, and pin naming differs (`references/12-hardware-platforms.md`).
 
+## Keycodes & versions (read before asserting any keycode name)
+
+Keycode names are **version-dependent** — a keymap from 2022 may not compile on today's QMK, and the *correct* name depends on the user's version. Before you commit to a keycode name:
+
+1. **Detect the version.** If the user has a `qmk_firmware` checkout: `git -C <path> describe --tags`, or read `QMK_KEYCODES_VERSION` near the top of `quantum/keycodes.h`. If they only know the docs, assume current `master`. **State the version you're targeting.**
+2. **Route by task:**
+   - *Single well-known rename* (`RESET`, `RGB_*`, `setPinOutput`, driver casing…) → the common-traps table: `references/00 §H`, `references/17 §4`. This handles ~90% of cases and stays small.
+   - *Migrating across versions*, or *a name that won't compile and isn't in that table* → start from **`references/19-keycodes-changelog.md`** (the index). Each release's changeset is its own file under `references/keycodes-changelog/<version>.md`; to get the whole window as one dump instead of reading each file, run **`scripts/keycodes_migration.py --from <their_version> [--to <target|latest>]`** (default `--to latest`; cosmetic-only releases are skipped). Apply every `deprecated OLD→NEW` / `retired OLD` / `removed` entry for releases in the half-open interval **`(their_version, target_version]`**. That is the exhaustive, exact edit list. (Detection gives the interval; the catalog gives the facts; the user's `keymap.c` supplies the intersection — all three are required.)
+3. **Local ground truth** for "does this name exist *here*": grep the user's own `quantum/keycodes.h` (modern, data-driven) or, on pre-`0.20` trees, `quantum/quantum_keycodes.h`; in-window deprecations live in `quantum/quantum_keycodes_legacy.h`.
+
 ## How this skill is organized
 
 ```
@@ -42,13 +52,19 @@ qmk-skill/
 │   ├── 08-displays.md                   ← OLED, Quantum Painter, HD44780, ST7565, encoders
 │   ├── 09-audio-haptic.md               ← audio, MIDI, sequencer, haptic
 │   ├── 10-connectivity.md               ← split, wireless/BT, command, secure, os_detection, rawhid, battery
-│   ├── 11-other-features.md             ← bootmagic, dip_switch, unicode, steno, wpm, community modules
+│   ├── 11-other-features.md             ← bootmagic, dip_switch, unicode, steno, wpm
 │   ├── 12-hardware-platforms.md         ← MCUs, ARM platforms, hand-wire, custom matrix, converters
 │   ├── 13-drivers-lowlevel.md           ← i2c/spi/uart/serial/gpio/adc, eeprom/flash, ws2812, LED-driver table
 │   ├── 14-configurator-api-via.md       ← Configurator, QMK API, keymap.json, VIA & Vial
 │   ├── 15-flashing-debugging.md         ← flash/bootloader, ISP, Zadig, debug, SWD, unit tests, size
 │   ├── 16-userspace-development.md      ← userspace, coding conventions, contributing, glossary
-│   └── 17-faq-gotchas-breaking-changes.md ← FAQs, breaking-change cycle, changelog, deprecated APIs
+│   ├── 17-faq-gotchas-breaking-changes.md ← FAQs, breaking-change cycle, changelog, deprecated APIs
+│   ├── 18-community-modules.md          ← modern plugin mechanism: modules, keycodes, hooks, real-world examples
+│   ├── 19-keycodes-changelog.md         ← keycode-migration INDEX (per-version files under keycodes-changelog/)
+│   └── keycodes-changelog/              ← one file per release (0.20.0.md … 0.31.5.md); load only your migration window
+├── scripts/
+│   ├── gen_keycode_catalog.py           ← regenerate 19 + keycodes-changelog/ from a qmk_firmware checkout
+│   └── keycodes_migration.py            ← dump every release changeset in (from, to] as one document
 └── assets/
     ├── keymap-template.c                ← idiomatic starter keymap (layer enum, SAFE_RANGE, hooks)
     └── info-json-template.json          ← starter keyboard definition with schema notes
@@ -68,7 +84,7 @@ qmk-skill/
 | **Build & flash** firmware | `02` (workflow), `15` (deep) | `12` |
 | Use the **QMK Configurator** or `keymap.json` | `14` | `03`, `02` (json2c/c2json) |
 | Hook up **VIA / Vial** | `14` | `10` (rawhid), `00 §G` |
-| Add **plugins / custom C / modules** | `16` (userspace/modules), `01` (hooks), `05` | `00` |
+| Add **plugins / custom C / modules** | `18` (modules), `16` (userspace), `01` (hooks), `05` | `00` |
 | Design **advanced / unique keymap behavior** | `04`, `05`, `01` | `00` |
 | **Wireless / split** keyboard | `10` | `12`, `13`, `07`/`08` (sync) |
 | Add **RGB / backlight / per-key LEDs** | `07` | `13` (drivers), `03` |
@@ -79,6 +95,7 @@ qmk-skill/
 | Recover from a **broken flash / bricked board** | `15`, `00 §F` | `12` |
 | Contribute a keyboard/PR upstream | `16`, `03` (lint/guidelines) | `17` |
 | Know if an API is **deprecated/removed** | `00 §H`, `17` | — |
+| **Migrate keycodes across versions** / old keymap won't compile | `19` (index → `keycodes-changelog/`), or run `scripts/keycodes_migration.py --from X --to Y` | `00 §H`, `17 §4` (common traps first) |
 
 ## The 5-line mental model (read `references/01` for depth)
 
@@ -122,12 +139,12 @@ qmk-skill/
 1. Enable it: the feature's `info.json` block **and/or** `rules.mk` `XXX_ENABLE = yes` (each feature reference in `05`–`11` shows both).
 2. Configure knobs (defaults documented in each reference).
 3. Wire any callbacks (`process_record_user`, indicator functions, etc.) — read `01 §9` for the full hook catalog and `00 §A` for return semantics.
-4. For **advanced/custom plugins** with no built-in feature: write it in `process_record_user` (keymap-level) or a **userspace** (`16`) or a **community module** (`11`). See PB-7.
+4. For **advanced/custom plugins** with no built-in feature: write it in `process_record_user` (keymap-level) or a **userspace** (`16`) or a **community module** (`18`). See PB-7.
 
 ### PB-7 — Add extensive / advanced custom code (plugins, modules, userspace)
 - **Per-keymap custom logic:** implement `process_record_user` + custom keycodes (`SAFE_RANGE`/`QK_USER`). Pattern in `assets/keymap-template.c`.
 - **Share code across keyboards:** a **userspace** (`references/16`) — `users/<name>/` with `rules.mk` + `config.h` + `<name>.h` + `<name>.c`. `USER_NAME` overrides the name=keymap-name default. **`config.h`** = build-time defines; **`<name>.h`** = enums/settings (including them the wrong way is the #1 build break).
-- **Distributable, self-contained extension:** a **community module** (`references/11`) — `modules/<name>/` with its own `rules.mk` + `<name>.c`; hooks discovered by name matching the directory; API version-gated. (Not supported by the Configurator.)
+- **Distributable, self-contained extension (the recommended way to ship a plugin):** a **community module** (`references/18`) — `modules/<name>/` with its own `qmk_module.json` + `rules.mk` + `<name>.c`; hooks (`process_record_<module>`, `housekeeping_task_<module>`, pointing-device, …) discovered by name matching the directory; declares its own keycodes + feature deps; API version-gated via `ASSERT_COMMUNITY_MODULES_MIN_API_VERSION`. (Not supported by the Configurator; real-world examples: getreuer/drashna/yeroca — see `18 §7`.)
 - **Deep customization hooks** (the full catalog, `01 §9`): `keyboard_pre_init`, `keyboard_post_init`, `matrix_init/scan`, `housekeeping_task`, `process_record`, `post_process_record`, `layer_state_set`, `led_update`, `suspend_*`, `encoder_update`, `oled_task`, RGB/LED indicator callbacks, etc. Most have `_kb` (call `_user`!) and `_user` variants.
 
 ### PB-8 — Design advanced / unique keymap behavior

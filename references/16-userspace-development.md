@@ -4,7 +4,7 @@ This reference synthesizes everything about *extending QMK beyond a single keyma
 
 > Sources synthesized: `feature_userspace.md`, `coding_conventions_c.md`, `coding_conventions_python.md`, `cli_development.md`, `api_development_overview.md`, `api_development_environment.md`, `contributing.md`, `pr_checklist.md`, `documentation_best_practices.md`, `documentation_templates.md`, `support.md`, `reference_glossary.md`, `syllabus.md`.
 >
-> Companion references: **`01-architecture.md`** (the `process_record` dispatch chain §7 and the full overrideable-hook catalog §9 — do **not** duplicate here), **`02-getting-started-build.md`** (External Userspace *repo* setup + `qmk userspace-*` commands §7), **`11-other-features.md`** (community modules — an alternative code-sharing mechanism), **`17-faq-gotchas-breaking-changes.md`** (deprecation policy & breaking-changes history).
+> Companion references: **`01-architecture.md`** (the `process_record` dispatch chain §7 and the full overrideable-hook catalog §9 — do **not** duplicate here), **`02-getting-started-build.md`** (External Userspace *repo* setup + `qmk userspace-*` commands §7), **`18-community-modules.md`** (community modules — an alternative code-sharing mechanism), **`17-faq-gotchas-breaking-changes.md`** (deprecation policy & breaking-changes history).
 
 ---
 
@@ -265,7 +265,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 - **Always `return process_record_keymap(...)` at the end** of the shared `process_record_user`; forgetting it silently eats every per-board keycode.
 - **Replace `SAFE_RANGE` with `NEW_SAFE_RANGE`** in every keymap, or board-local keycodes collide with the shared ones.
 - **`KC_MAKE`-style auto-flash (`:flash`) does not work on WSL** (AVRDUDE limitation).
-- **Alternative sharing mechanisms:** the External Userspace repo (`02` §7) for the *build/CI* side, and **community modules** (`11-other-features.md`) for an opt-in module system that doesn't require a matching keymap name.
+- **Alternative sharing mechanisms:** the External Userspace repo (`02` §7) for the *build/CI* side, and **community modules** (`18-community-modules.md`) for an opt-in module system that doesn't require a matching keymap name.
 
 ---
 
@@ -1009,7 +1009,7 @@ After the **Tutorial** you should be able to create, compile, and flash a basic 
 - **`01-architecture.md`** §7 (process_record dispatch chain, halt semantics) & §9 (full overrideable-hook catalog) — the userspace usually implements `process_record_user` / `matrix_scan_user` / `layer_state_set_user` etc.; consult 01 for ordering and signatures, not this file.
 - **`02-getting-started-build.md`** §7 — the **External Userspace** repo + `qmk userspace-add/remove/list/compile/doctor` commands; the modern, upstream-supported sharing mechanism (vs. the in-tree `users/` feature here).
 - **`03-config-and-info-json.md`** — data-driven equivalents of `config.h` `#define`s; `QMK_USERSPACE` build define.
-- **`11-other-features.md`** — **community modules**, an alternative opt-in code-sharing system that doesn't require a matching keymap name.
+- **`18-community-modules.md`** — **community modules**, an alternative opt-in code-sharing system that doesn't require a matching keymap name.
 - **`14-configurator-api-via.md`** — the public QMK API / Configurator / VIA side (distinct from the self-hosted Compile API in §5).
 - **`15-flashing-debugging.md`** — flashing mechanics, `QK_BOOT`, unit testing, IDE setup.
 - **`17-faq-gotchas-breaking-changes.md`** — deprecation policy and breaking-changes history (why in-tree userspace/keymap PRs closed).
