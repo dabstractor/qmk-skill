@@ -1,0 +1,207 @@
+# Auto-update the QMK keycode-migration catalog.
+#
+# Purpose
+#   Whenever QMK Firmware publishes a new release tag, regenerate
+#   references/19-keycodes-changelog.md + references/keycodes-changelog/ from a
+#   fresh clone of qmk/qmk_firmware and commit the result back here, so the
+#   skill's keycode catalog never goes stale. Zero manual intervention: this runs
+#   itself on a schedule.
+#
+# Design — why it's cheap to run daily
+#   A daily run is fine because the FIRST step (the "gate") is a single
+#   `git ls-remote` (tag refs only — NO clone, ~2s). It compares the newest tag
+#   advertised by qmk/qmk_firmware against the version already recorded in the
+#   index's "Scope" line. If they match, the job exits immediately having done no
+#   real work. The expensive steps (full clone + regenerate) only run when a new
+#   release actually exists — i.e. ~once a month, same as a naive monthly job, but
+#   with ~24h responsiveness instead of up to a month.
+#
+#   The script writes only two things: the index file (updated in place between
+#   its GENERATED INDEX sentinels) and one file per release under the split dir.
+#   Across runs the generated output is deterministic EXCEPT for the "Generated:
+#   UTC <date>" run-date line in the index. So after regenerating we commit only
+#   if something OTHER than that date line changed (the commit step filters it
+#   out) — this prevents a date-only commit every day.
+#
+# Manual override
+#   workflow_dispatch with `force: true` bypasses the version gate and regenerates
+#   unconditionally (useful after editing the script, and as a one-click recovery
+#   if GitHub ever auto-disables the schedule after 60 days of repo inactivity).
+#
+# Permissions
+#   `contents: write` is the only permission needed (to push the catalog commit).
+#   The default GITHUB_TOKEN is used; no secrets are required. Note: commits made
+#   by the default token do NOT re-trigger `on: push` workflows (intentional, to
+#   avoid loops), which is fine for this repo.
+
+name: Update keycode catalog
+
+on:
+  schedule:
+    # Daily at 06:17 UTC. A non-round minute avoids GitHub's scheduled-workflow
+    # load spike at the top of the hour (official recommendation). Exact timing is
+    # irrelevant here since QMK releases ~monthly; a few minutes of delay is fine.
+    - cron: '17 6 * * *'
+  workflow_dispatch:
+    inputs:
+      force:
+        description: 'Regenerate even if no new QMK version is detected'
+        required: false
+        default: 'false'
+        type: boolean
+
+# Scheduled workflows run on the default branch. Prevent overlapping runs (a
+# long-running update shouldn't race a second trigger); do NOT cancel an in-flight
+# one mid-clone/mid-commit, so cancel-in-progress is false.
+concurrency:
+  group: update-keycode-catalog
+  cancel-in-progress: false
+
+# Explicit, minimal permissions — never rely on (or need) broader defaults.
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      # Shallow checkout of THIS repo (the skill). We only need the current
+      # working tree (the index + per-version files to update) and git credentials
+      # configured for the push-back. No full history required for committing.
+      - name: Checkout this repo
+        uses: actions/checkout@v4   # consider SHA-pinning for stricter supply-chain safety
+        with:
+          fetch-depth: 1
+
+      # ---- CHEAP GATE ------------------------------------------------------
+      # Decide whether a new QMK release exists WITHOUT cloning qmk_firmware.
+      # Sets step outputs: run (true/false), latest_tag, scanned_latest.
+      - name: Detect new QMK release (no clone)
+        id: gate
+        env:
+          FORCE: ${{ inputs.force || 'false' }}
+        run: |
+          python3 - <<'PY'
+          import os, re, subprocess
+
+          INDEX = "references/19-keycodes-changelog.md"
+          URL   = "https://github.com/qmk/qmk_firmware.git"
+          FORCE = os.environ.get("FORCE", "false") == "true"
+
+          def vt(s): return tuple(int(x) for x in s.split("."))
+
+          # 1) Newest version tag advertised by qmk/qmk_firmware (refs only).
+          remote = set()
+          out = subprocess.run(
+              ["git", "ls-remote", "--tags", "--refs", URL],
+              capture_output=True, text=True, check=True).stdout
+          for line in out.splitlines():
+              if "\trefs/tags/" in line:
+                  name = line.rsplit("refs/tags/", 1)[1]
+                  if re.fullmatch(r"\d+\.\d+\.\d+", name):
+                      remote.add(name)
+          remote_latest = max(remote, key=vt) if remote else None
+
+          # 2) Newest version already scanned, read from the index "Scope" line.
+          #    (The Scope line lists baseline, the scanned-up-to version, and the
+          #    newest cataloged version; max() of its N.N.N tokens is the scanned
+          #    version. Robust to cosmetic wording changes.)
+          scanned_latest = None
+          try:
+              for line in open(INDEX, encoding="utf-8").read().splitlines():
+                  if "Scope:" in line and "scanned" in line:
+                      nums = re.findall(r"\d+\.\d+\.\d+", line)
+                      scanned_latest = max(nums, key=vt) if nums else None
+                      break
+          except FileNotFoundError:
+              pass
+
+          new_version = bool(remote_latest) and (
+              scanned_latest is None or vt(remote_latest) > vt(scanned_latest))
+          should_run = FORCE or new_version
+
+          with open(os.environ["GITHUB_OUTPUT"], "a") as f:
+              f.write(f"run={'true' if should_run else 'false'}\n")
+              f.write(f"latest_tag={remote_latest or ''}\n")
+              f.write(f"scanned_latest={scanned_latest or ''}\n")
+
+          summary = os.environ.get("GITHUB_STEP_SUMMARY")
+          if summary:
+              with open(summary, "a") as f:
+                  f.write("### Keycode-catalog update gate\n\n")
+                  f.write(f"- Latest QMK tag (remote): `{remote_latest}`\n")
+                  f.write(f"- Latest scanned (index Scope): `{scanned_latest}`\n")
+                  f.write(f"- New version detected: **{'yes' if new_version else 'no'}**\n")
+                  f.write(f"- Forced (manual): **{'yes' if FORCE else 'no'}**\n")
+                  f.write(f"- Decision: **{'RUN — regenerate & commit' if should_run else 'SKIP — already up to date'}**\n")
+
+          print(f"remote_latest={remote_latest} scanned_latest={scanned_latest} "
+                f"new_version={new_version} force={FORCE} -> run={should_run}")
+          PY
+
+      # All steps below are gated on a new version (or a forced manual run).
+
+      # ---- CLONE QMK -------------------------------------------------------
+      # Full clone with history + tags. The generator diffs every release-tag
+      # pair across the full history (git tag / git diff / git log), so neither a
+      # shallow nor a header-files-only checkout would work — it genuinely needs
+      # the repo's history and tags. qmk_firmware is ~0.5 GB; fine on a hosted
+      # runner, and this step only runs when a new release exists (~monthly).
+      - name: Clone qmk_firmware (full, with history + tags)
+        if: steps.gate.outputs.run == 'true'
+        run: |
+          git clone --quiet https://github.com/qmk/qmk_firmware.git "$HOME/qmk_firmware"
+          latest="$(git -C "$HOME/qmk_firmware" tag | grep -E '^[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -1)"
+          echo "Cloned qmk_firmware; newest tag: $latest"
+
+      # ---- REGENERATE ------------------------------------------------------
+      # Pure-stdlib Python (no pip install needed). Output paths are relative to
+      # the repo root, so the script writes straight into the checked-out tree.
+      - name: Regenerate keycode catalog
+        if: steps.gate.outputs.run == 'true'
+        run: |
+          python3 scripts/gen_keycode_catalog.py "$HOME/qmk_firmware" \
+            -o references/19-keycodes-changelog.md \
+            --split-dir references/keycodes-changelog
+
+      # ---- COMMIT (only on a real change) ----------------------------------
+      # Commit + push only if the regenerated output differs from what's checked
+      # in by anything OTHER than the ever-changing "Generated: UTC <date>" line.
+      # That filter is what makes a no-new-version forced run a clean no-op, and
+      # guarantees we never produce a date-only commit.
+      - name: Commit regenerated catalog if anything real changed
+        if: steps.gate.outputs.run == 'true'
+        env:
+          LATEST_TAG: ${{ steps.gate.outputs.latest_tag }}
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+        run: |
+          set -e
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          # Stage the two things the script writes (also captures deletions of
+          # stale per-version files, which the generator prunes).
+          git add references/19-keycodes-changelog.md references/keycodes-changelog
+
+          # "Real change" = at least one +/- content line that is NOT a diff
+          # header and NOT the run-date line. Pattern stops before the trailing
+          # backtick on purpose (avoids backtick-in-bash pitfalls).
+          if git diff --cached -- references/ \
+               | grep -E  '^[+-]' \
+               | grep -vE '^(\+\+\+|---)' \
+               | grep -vE '^[+-]- \*\*Generated:\*\* UTC' \
+               | grep -q .; then
+
+            version="${LATEST_TAG:-latest}"
+            git commit -m "chore(keycodes): regenerate keycode catalog through ${version}" \
+                       -m "Auto-generated by the 'Update keycode catalog' workflow." \
+                       -m "Ran scripts/gen_keycode_catalog.py against qmk/qmk_firmware" \
+                       -m "(latest tag scanned: ${LATEST_TAG:-unknown})."
+            # actions/checkout leaves HEAD detached at the branch tip; push the
+            # new commit onto the default branch ref directly.
+            git push origin "HEAD:${DEFAULT_BRANCH}"
+            echo "::notice::Committed keycode-catalog update through ${version}."
+          else
+            echo "::notice::No meaningful catalog changes (only the run date differed); nothing to commit."
+          fi
