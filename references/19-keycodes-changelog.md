@@ -47,8 +47,8 @@ A rename can be split across layers and releases: the new macro lands in `quantu
 <!-- BEGIN GENERATED INDEX -->
 
 - **Source repo:** [qmk/qmk_firmware](https://github.com/qmk/qmk_firmware)
-- **Scope:** scanned `0.19.0` → **`0.33.10`** (197 release tags). **19** of those releases changed at least one keycode layer (newest cataloged: `0.31.5` — `keycodes_migration.py --to latest` resolves to it).
-- **Generated:** UTC `2026-07-20`.
+- **Scope:** scanned `0.19.0` → **`0.33.11`** (198 release tags). **19** of those releases changed at least one keycode layer (newest cataloged: `0.31.5` — `keycodes_migration.py --to latest` resolves to it).
+- **Generated:** UTC `2026-07-24`.
 
 ## Per-layer change coverage (cross-check)
 
