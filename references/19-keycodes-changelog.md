@@ -47,18 +47,18 @@ A rename can be split across layers and releases: the new macro lands in `quantu
 <!-- BEGIN GENERATED INDEX -->
 
 - **Source repo:** [qmk/qmk_firmware](https://github.com/qmk/qmk_firmware)
-- **Scope:** scanned `0.19.0` → **`0.33.13`** (200 release tags). **19** of those releases changed at least one keycode layer (newest cataloged: `0.31.5` — `keycodes_migration.py --to latest` resolves to it).
-- **Generated:** UTC `2026-08-03`.
+- **Scope:** scanned `0.19.0` → **`0.34.0`** (201 release tags). **20** of those releases changed at least one keycode layer (newest cataloged: `0.34.0` — `keycodes_migration.py --to latest` resolves to it).
+- **Generated:** UTC `2026-09-01`.
 
 ## Per-layer change coverage (cross-check)
 
 | Layer | File(s) | Versions changed |
 |-------|---------|------------------|
-| keycodes.h | `quantum/keycodes.h` | 12 |
+| keycodes.h | `quantum/keycodes.h` | 13 |
 | quantum_keycodes.h | `quantum/quantum_keycodes.h` | 8 |
 | legacy.h | `quantum/quantum_keycodes_legacy.h` | 7 |
 | extras (layouts) | `data/constants/keycodes/extras/` | 8 |
-| **union (this catalog)** | — | **19** |
+| **union (this catalog)** | — | **20** |
 
 ## Version index — one file per release
 
@@ -85,6 +85,7 @@ Each release's full changeset is its own file under [`keycodes-changelog/`](keyc
 | `0.30.14` | 2025-12-01 | — | +32/−32 | — | — | whitespace-only | [`0.30.14.md`](keycodes-changelog/0.30.14.md) |
 | `0.31.0` | 2025-12-01 | +15/−7 | — | — | — | added 4 keycode(s): `QK_LED_MATRIX_FLAG_NEXT`, `QK_LED_MATRIX_FLAG_PREVIOUS`, `QK_RGB_MATRIX_FLAG_NEXT`, `QK_RGB_MATRIX_FLAG_PREVIOUS`; added 7 macro(s): `QMK_KEYCODES_VERSION`, `QMK_KEYCODES_VERSION_BCD`, `QMK_KEYCODES_VERSION_PATCH`, `IS_LED_MATRIX_KEYCODE(code)`, `IS_RGB_MATRIX_KEYCODE(code)`, `LED_MATRIX_KEYCODE_RANGE`, `RGB_MATRIX_KEYCODE_RANGE` | [`0.31.0.md`](keycodes-changelog/0.31.0.md) |
 | `0.31.5` | 2026-01-01 | +1/−1 | — | — | — | copyright-only | [`0.31.5.md`](keycodes-changelog/0.31.5.md) |
+| `0.34.0` | 2026-08-31 | +177/−10 | — | — | — | added 84 keycode(s): `QK_STENO_MAX`, `QK_STENO_FUNCTION`, `QK_STENO_N1`, `QK_STENO_N2`, `QK_STENO_N3`, `QK_STENO_N4`, `QK_STENO_N5`, `QK_STENO_N6`, `QK_STENO_S1`, `QK_STENO_S2` … (+74 more); added 5 macro(s): `QMK_KEYCODES_VERSION`, `QMK_KEYCODES_VERSION_BCD`, `QMK_KEYCODES_VERSION_PATCH`, `IS_STENO_KEYCODE(code)`, `STENO_KEYCODE_RANGE`; removed/renamed 5 keycode(s) | [`0.34.0.md`](keycodes-changelog/0.34.0.md) |
 
 ### Migration-window tool — `scripts/keycodes_migration.py`
 
